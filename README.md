@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Notes App
 
-## Getting Started
+Simple notes management app built with **Next.js (App Router)** and **Supabase**, featuring authentication, real-time notes, and server actions.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Features
+
+- User authentication via Supabase
+- Create, update, delete notes
+- Per-user notes (RLS enforced)
+- Note summarization placeholder
+- Responsive TailwindCSS UI
+- Real-time UI updates with server actions
+- Loading skeletons for pages
+- Confirm before deletion
+
+---
+
+## Tech Stack
+
+- **Next.js 14+** (App Router, Server Actions)
+- **Supabase** (Auth + Postgres + RLS)
+- **TailwindCSS** for styling
+- React Server Components
+- Server Actions for note CRUD
+
+---
+
+## Project Structure
+```
+app/
+├─ dashboard/
+│ ├─ page.tsx # Notes list + create form
+│ ├─ loading.tsx # Dashboard loading skeleton
+├─ notes/
+│ ├─ [id]/
+│ │ ├─ page.tsx # Note detail & edit page
+│ │ ├─ loading.tsx # Note loading skeleton
+├─ _components/ # Shared UI components
+│ ├─ submit-button.tsx
+│ ├─ confirm-button.tsx
+│ ├─ log-out-button.tsx
+features/
+├─ add-new-note/ # Server actions for creating notes
+utils/
+├─ supabase/
+│ ├─ server.ts # Supabase server client helper
+├─ redirectIfNotAuthenticated.ts
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Supabase Setup
 
-## Learn More
+1. Create a project on [Supabase](https://supabase.com/).
+2. Enable **Email + Password Auth**.
+3. Create `notes` table:
 
-To learn more about Next.js, take a look at the following resources:
+```sql
+create table notes (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references auth.users(id),
+  title text not null,
+  content text,
+  summary text,
+  summarized_at timestamp,
+  created_at timestamp default now(),
+  updated_at timestamp default now()
+);
+```
+4. Enable Row Level Security (RLS):
+```sql
+alter table notes enable row level security;
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+create policy "Users can view their own notes" on notes
+  for select using (auth.uid() = user_id);
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+create policy "Users can insert their own notes" on notes
+  for insert with check (auth.uid() = user_id);
 
-## Deploy on Vercel
+create policy "Users can update their own notes" on notes
+  for update using (auth.uid() = user_id);
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+create policy "Users can delete their own notes" on notes
+  for delete using (auth.uid() = user_id);
+```
