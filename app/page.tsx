@@ -33,11 +33,10 @@ export default async function LandingPage() {
           </div>
 
           {/* tiny feature row for depth */}
-          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {[
               ['Secure by default', 'Row Level Security via Supabase Auth'],
               ['Fast & modern', 'Next.js App Router + Server Actions'],
-              ['AI summaries', 'Turn long notes into quick insights'],
             ].map(([title, desc]) => (
               <div key={title} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-left backdrop-blur-xl">
                 <h3 className="text-sm font-medium">{title}</h3>
